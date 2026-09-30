@@ -1,4 +1,5 @@
 import { PrototypeDemo } from './components/PrototypeDemo'
+import { Snelhulp } from './components/Snelhulp'
 import { useMomentDemo } from './hooks/useMomentDemo'
 import './App.css'
 
@@ -12,11 +13,16 @@ export default function App() {
           <span className="brand-mark" aria-hidden />
           <span className="brand-name">KBC Moment</span>
         </div>
-        <span className="nav-meta">Klikbaar prototype · Team Daedalus</span>
+        <nav className="nav-links">
+          <a href="#snelhulp">Snelhulp</a>
+          <a href="#moment">KBC Moment</a>
+        </nav>
       </header>
 
-      <section className="hero">
-        <p className="hero-kicker">Wat is dit?</p>
+      <Snelhulp />
+
+      <section className="hero" id="moment">
+        <p className="hero-kicker">Volgende fase · personalisatie met consent</p>
         <p className="hero-brand">KBC Moment</p>
         <h1 className="hero-title">
           Een demo van hoe een bank
