@@ -18,8 +18,9 @@ export function Snelhulp() {
         <p className="sh-eyebrow">Snelhulp</p>
         <h1>Waarmee kunnen we helpen?</h1>
         <p>
-          Kies je vraag en beantwoord een paar korte vragen. De chatassistent komt enkel
-          tussen als de beslisboom je niet verder helpt.
+          Kies je vraag en beantwoord een paar korte vragen. <strong>Mia</strong> — onze
+          Gemini-assistent — komt tussen als de boom stokt, of wanneer jij haar
+          rechtstreeks aanspreekt.
         </p>
       </div>
 
@@ -161,9 +162,24 @@ export function Snelhulp() {
             <div className="sh-idle">
               <p className="sh-step-title">Kies een vraag om te starten.</p>
               <p className="sh-note">
-                Geen login, geen klantprofiel: de beslisboom werkt enkel met wat je hier
-                aanklikt.
+                Geen login, geen klantprofiel: de beslisboom werkt met wat je aanklikt.
+                Probeer ook de nieuwe rubriek <strong>Life moments</strong>.
               </p>
+              <div className="sh-idle-actions">
+                <button type="button" className="btn btn-primary" onClick={s.askMiaDirect}>
+                  Praat met Mia
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => {
+                    const life = s.categories.find((c) => c.id === 'leven')
+                    if (life) s.selectCategory(life.id)
+                  }}
+                >
+                  Toon life moments
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -188,6 +204,9 @@ export function Snelhulp() {
           <p className={s.chatLoaded ? 'sh-module on' : 'sh-module'}>
             Chat-module: {s.chatLoaded ? 'geladen' : 'niet geladen'}
           </p>
+          <button type="button" className="btn btn-ghost sh-ask-mia" onClick={s.askMiaDirect}>
+            Vraag het aan Mia
+          </button>
         </aside>
       </div>
     </section>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { searchTrees } from '../data/trees'
+import { askMia, getGeminiApiKey } from '../lib/gemini'
 import { reasonLabel, useSnelhulp, type ChatContext } from '../hooks/useSnelhulp'
 
 type Bubble = {
@@ -8,16 +9,16 @@ type Bubble = {
   text: string
 }
 
-const followUps = [
-  'Dank je. Op basis daarvan lijkt het een blokkering aan onze kant. Ik heb je kaartinstellingen gecontroleerd en een reset aangevraagd — probeer het binnen 5 minuten opnieuw.',
-  'Dit vraagt een medewerker. Je kan meteen een terugbelverzoek doen; die ziet dit hele gesprek, zodat je niets hoeft te herhalen.',
-]
-
-function openingAfterEscalate(ctx: ChatContext): string {
+function openingAfterEscalate(ctx: ChatContext, live: boolean): string {
+  const who = live ? 'Mia (Gemini)' : 'Mia (lokale modus)'
   if (ctx.reason === 'no-results') {
-    return `Je zocht op “${ctx.searchQuery}”, maar vond geen passend antwoord. Vertel kort wat er aan de hand is.`
+    return `Hallo, ik ben ${who}. Je zocht op “${ctx.searchQuery}” zonder treffer. Vertel kort wat er speelt.`
   }
-  const parts = [`Ik zie dat het gaat over “${ctx.question}”.`]
+  if (ctx.reason === 'ask-mia') {
+    return `Hallo, ik ben ${who}. Waarmee kan ik helpen?`
+  }
+  const parts = [`Hallo, ik ben ${who}.`]
+  if (ctx.question) parts.push(`Ik zie je traject rond “${ctx.question}”.`)
   if (ctx.answers.length) {
     parts.push(`Je gaf aan: ${ctx.answers.map((a) => a.answer.toLowerCase()).join(' → ')}.`)
   }
@@ -34,9 +35,11 @@ function openingAfterEscalate(ctx: ChatContext): string {
  */
 export function HulpTab() {
   const s = useSnelhulp()
+  const live = Boolean(getGeminiApiKey())
   const [draft, setDraft] = useState('')
   const [extra, setExtra] = useState<Bubble[]>([])
   const [botTurns, setBotTurns] = useState(0)
+  const [busy, setBusy] = useState(false)
   const [callback, setCallback] = useState<'closed' | 'form' | 'sent'>('closed')
   const logRef = useRef<HTMLDivElement>(null)
   const escalatedKey = s.escalation
@@ -51,7 +54,7 @@ export function HulpTab() {
         {
           id: `esc-${escalatedKey}`,
           from: 'bot',
-          text: openingAfterEscalate(s.escalation),
+          text: openingAfterEscalate(s.escalation, live),
         },
       ])
       setBotTurns(1)
@@ -62,13 +65,14 @@ export function HulpTab() {
       setExtra([])
       setBotTurns(0)
       setCallback('closed')
+      setBusy(false)
     }
-  }, [escalatedKey, s.escalation])
+  }, [escalatedKey, s.escalation, live])
 
   useEffect(() => {
     const el = logRef.current
     if (el) el.scrollTop = el.scrollHeight
-  }, [s.depth, s.answers, s.node, s.resolved, extra, callback])
+  }, [s.depth, s.answers, s.node, s.resolved, extra, callback, busy])
 
   const thread: Bubble[] = []
   thread.push({
@@ -143,7 +147,7 @@ export function HulpTab() {
   function send(e: FormEvent) {
     e.preventDefault()
     const text = draft.trim()
-    if (!text) return
+    if (!text || busy) return
     setDraft('')
 
     if (s.resolved) {
@@ -154,14 +158,37 @@ export function HulpTab() {
     }
 
     if (s.escalation) {
-      s.countChatMessage()
-      const reply = followUps[Math.min(botTurns - 1, followUps.length - 1)]
-      setExtra((m) => [
-        ...m,
-        { id: `u-${Date.now()}`, from: 'user', text },
-        { id: `b-${Date.now()}`, from: 'bot', text: reply },
-      ])
-      setBotTurns((n) => n + 1)
+      void (async () => {
+        s.countChatMessage()
+        const userBubble: Bubble = { id: `u-${Date.now()}`, from: 'user', text }
+        setExtra((m) => [...m, userBubble])
+        setBusy(true)
+        try {
+          const history = [...extra, userBubble]
+            .filter((b) => b.from === 'user' || b.from === 'bot')
+            .map((b) => ({
+              role: (b.from === 'user' ? 'user' : 'model') as 'user' | 'model',
+              text: b.text,
+            }))
+          const mia = await askMia(s.escalation!, history)
+          setExtra((m) => [
+            ...m,
+            { id: `b-${Date.now()}`, from: 'bot', text: mia.reply },
+          ])
+          setBotTurns((n) => n + 1)
+        } catch {
+          setExtra((m) => [
+            ...m,
+            {
+              id: `b-${Date.now()}`,
+              from: 'bot',
+              text: 'Even geen verbinding met Mia. Probeer opnieuw of vraag een terugbelverzoek.',
+            },
+          ])
+        } finally {
+          setBusy(false)
+        }
+      })()
       return
     }
 
@@ -234,11 +261,11 @@ export function HulpTab() {
           K
         </div>
         <div>
-          <strong>Chat hulp</strong>
+          <strong>Chat hulp · Mia</strong>
           <span>
             {s.escalation
-              ? `Assistent · ${reasonLabel[s.escalation.reason]}`
-              : 'Beslisboom · antwoorden uit vaste stappen'}
+              ? `${live ? 'Gemini live' : 'Lokale Mia'} · ${reasonLabel[s.escalation.reason]}`
+              : 'Beslisboom eerst · Mia bij escalatie'}
           </span>
         </div>
       </header>
@@ -255,7 +282,11 @@ export function HulpTab() {
           </div>
         ))}
 
-        {suggestions.length > 0 && (
+        {busy && (
+          <div className="cust-hulp-bubble bot">Mia denkt na…</div>
+        )}
+
+        {suggestions.length > 0 && !busy && (
           <div className="cust-hulp-chips" aria-label="Suggesties">
             {suggestions.map((c) => (
               <button key={c.label} type="button" onClick={c.onPick}>
@@ -311,14 +342,15 @@ export function HulpTab() {
             aria-label="Bericht"
             autoComplete="off"
           />
-          <button type="submit" className="btn btn-primary" disabled={!draft.trim()}>
-            Stuur
+          <button type="submit" className="btn btn-primary" disabled={!draft.trim() || busy}>
+            {busy ? '…' : 'Stuur'}
           </button>
         </form>
       )}
 
       <p className="cust-hulp-note">
-        Prototype. Eerst vaste stappen; vrije chat pas als de boom vastloopt.
+        Prototype. Eerst vaste stappen; daarna Mia
+        {live ? ' via Gemini' : ' (lokale modus — zet VITE_GEMINI_API_KEY)'}.
         {!s.escalation && s.tree ? ` · Terug ${s.backs}/3` : null}
       </p>
     </div>

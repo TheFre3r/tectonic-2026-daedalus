@@ -5,13 +5,19 @@ import { categories, searchTrees, type Category, type Tree, type TreeNode } from
 export const MAX_NOT_SOLVED = 2
 export const MAX_BACKS = 3
 
-export type EscalationReason = 'dead-end' | 'not-solved' | 'back-loops' | 'no-results'
+export type EscalationReason =
+  | 'dead-end'
+  | 'not-solved'
+  | 'back-loops'
+  | 'no-results'
+  | 'ask-mia'
 
 export const reasonLabel: Record<EscalationReason, string> = {
   'dead-end': 'Doodlopende tak in de beslisboom',
   'not-solved': `${MAX_NOT_SOLVED}× “lost het niet op”`,
   'back-loops': `${MAX_BACKS}× terug in dezelfde boom`,
   'no-results': 'Zoekopdracht gaf geen resultaat',
+  'ask-mia': 'Direct gesprek met Mia',
 }
 
 /* Alles wat de chatbot meekrijgt: enkel wat de klant in deze sessie aanklikte. */
@@ -150,6 +156,18 @@ export function useSnelhulp() {
     })
   }
 
+  function askMiaDirect() {
+    setChatLoaded(true)
+    setEscalation({
+      reason: 'ask-mia',
+      category: category.label,
+      question: tree?.question,
+      answers,
+      tried,
+      searchQuery: query.trim() || undefined,
+    })
+  }
+
   function chatSolved() {
     setResolved(true)
     setStats((s) => ({ ...s, withChat: s.withChat + 1 }))
@@ -184,6 +202,7 @@ export function useSnelhulp() {
     markNotSolved,
     escalateFromSearch,
     escalateFromSearchWithQuery,
+    askMiaDirect,
     chatSolved,
     countChatMessage,
     reset,

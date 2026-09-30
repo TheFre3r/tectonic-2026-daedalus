@@ -1,10 +1,7 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
+import { askMia, getGeminiApiKey, type MiaReply } from '../lib/gemini'
 import { reasonLabel, type ChatContext } from '../hooks/useSnelhulp'
-
-/*
- * Gesimuleerde chatbot. Deze module wordt pas via React.lazy geladen bij
- * escalatie — tot dan: geen bundel, geen sessie, geen tokens.
- */
 
 type Props = {
   context: ChatContext
@@ -12,44 +9,110 @@ type Props = {
   onSolved: () => void
 }
 
-type Message = { from: 'bot' | 'user'; text: string }
-
-function openingMessage(ctx: ChatContext): string {
-  if (ctx.reason === 'no-results') {
-    return `Je zocht op “${ctx.searchQuery}”, maar vond geen passend antwoord. Vertel kort wat er aan de hand is.`
-  }
-  const parts = [`Ik zie dat het gaat over “${ctx.question}”.`]
-  if (ctx.answers.length) {
-    parts.push(`Je gaf aan: ${ctx.answers.map((a) => a.answer.toLowerCase()).join(' → ')}.`)
-  }
-  if (ctx.tried.length) {
-    parts.push(`Je probeerde al: ${ctx.tried.join(', ')}. Die sla ik over.`)
-  }
-  parts.push('Wat zie je precies op je scherm of terminal?')
-  return parts.join(' ')
+type Message = {
+  from: 'bot' | 'user' | 'system'
+  text: string
+  urgency?: MiaReply['urgency']
 }
 
-const followUps = [
-  'Dank je. Op basis daarvan lijkt het een blokkering aan onze kant. Ik heb je kaartinstellingen gecontroleerd en een reset aangevraagd — probeer het binnen 5 minuten opnieuw.',
-  'Dit vraagt een medewerker. Je kan meteen een terugbelverzoek doen; die ziet dit hele gesprek, zodat je niets hoeft te herhalen.',
-]
+const momentCopy: Record<
+  NonNullable<MiaReply['momentHint']>,
+  { title: string; blurb: string }
+> = {
+  verhuizen: {
+    title: 'Life moment: verhuizen?',
+    blurb: 'Mia denkt dat je richting een woning gaat. Bekijk hoe KBC Moment je app zou aanpassen.',
+  },
+  'eerste-job': {
+    title: 'Life moment: eerste job?',
+    blurb: 'Mia pikte starter-signalen op. Speel het klant-prototype als Amir.',
+  },
+  zorgmoment: {
+    title: 'Life moment: zorgdruk?',
+    blurb: 'Mia merkt mogelijke druk op cashflow. In rust-modus dempt de app upsell.',
+  },
+}
+
+function openingFor(ctx: ChatContext, live: boolean): string {
+  const mode = live ? 'Mia (Gemini)' : 'Mia (lokale slimme modus)'
+  if (ctx.reason === 'no-results') {
+    return `Hallo, ik ben ${mode}. Je zocht op “${ctx.searchQuery}” zonder treffer. Vertel kort wat er speelt — ik help gericht verder.`
+  }
+  const bits = [`Hallo, ik ben ${mode}.`]
+  if (ctx.question) bits.push(`Ik zie je traject rond “${ctx.question}”.`)
+  if (ctx.answers.length) {
+    bits.push(`Je koos: ${ctx.answers.map((a) => a.answer.toLowerCase()).join(' → ')}.`)
+  }
+  if (ctx.tried.length) bits.push(`Al geprobeerd: ${ctx.tried.join(', ')}.`)
+  bits.push('Wat is de volgende detail dat ik moet weten?')
+  return bits.join(' ')
+}
 
 export default function ChatAssistant({ context, onMessage, onSolved }: Props) {
+  const live = Boolean(getGeminiApiKey())
   const [messages, setMessages] = useState<Message[]>([
-    { from: 'bot', text: openingMessage(context) },
+    { from: 'bot', text: openingFor(context, live) },
   ])
   const [draft, setDraft] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [suggestions, setSuggestions] = useState<string[]>([
+    'Dit is de fout die ik zie…',
+    'Wat moet ik nu doen?',
+    'Ik wil een medewerker',
+  ])
+  const [momentHint, setMomentHint] = useState<MiaReply['momentHint']>(null)
   const [callback, setCallback] = useState<'closed' | 'form' | 'sent'>('closed')
+  const [error, setError] = useState<string | null>(null)
+  const listRef = useRef<HTMLOListElement>(null)
   const botTurns = messages.filter((m) => m.from === 'bot').length
+
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
+  }, [messages, busy])
+
+  async function converse(userText: string) {
+    const trimmed = userText.trim()
+    if (!trimmed || busy) return
+
+    onMessage()
+    setError(null)
+    setDraft('')
+    setBusy(true)
+    setMessages((m) => [...m, { from: 'user', text: trimmed }])
+
+    const history = [...messages, { from: 'user' as const, text: trimmed }]
+      .filter((m) => m.from === 'user' || m.from === 'bot')
+      .map((m) => ({
+        role: (m.from === 'user' ? 'user' : 'model') as 'user' | 'model',
+        text: m.text,
+      }))
+
+    try {
+      const mia = await askMia(context, history)
+      setSuggestions(mia.suggestions.length ? mia.suggestions : suggestions)
+      if (mia.momentHint) setMomentHint(mia.momentHint)
+      setMessages((m) => [
+        ...m,
+        { from: 'bot', text: mia.reply, urgency: mia.urgency },
+      ])
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Onbekende fout'
+      setError(msg)
+      setMessages((m) => [
+        ...m,
+        {
+          from: 'bot',
+          text: 'Even geen verbinding met Mia. Probeer opnieuw of vraag een terugbelverzoek.',
+        },
+      ])
+    } finally {
+      setBusy(false)
+    }
+  }
 
   function send(e: FormEvent) {
     e.preventDefault()
-    const text = draft.trim()
-    if (!text) return
-    onMessage()
-    setDraft('')
-    const reply = followUps[Math.min(botTurns - 1, followUps.length - 1)]
-    setMessages((m) => [...m, { from: 'user', text }, { from: 'bot', text: reply }])
+    void converse(draft)
   }
 
   function requestCallback(e: FormEvent) {
@@ -59,8 +122,19 @@ export default function ChatAssistant({ context, onMessage, onSolved }: Props) {
 
   return (
     <div className="sh-chat">
+      <div className={`sh-mia-banner ${live ? 'live' : 'local'}`}>
+        <strong>{live ? 'Live · Google AI Studio (Gemini)' : 'Lokale modus'}</strong>
+        <span>
+          {live
+            ? 'Antwoorden via gratis Gemini API met jouw boom-context.'
+            : 'Zet VITE_GEMINI_API_KEY in .env voor live Mia. Nu: slimme offline fallback.'}
+        </span>
+      </div>
+
       <details className="sh-context">
-        <summary>Context meegegeven aan de chatbot · {reasonLabel[context.reason]}</summary>
+        <summary>
+          Context meegegeven aan Mia · {reasonLabel[context.reason]}
+        </summary>
         <dl>
           {context.category && (
             <>
@@ -95,35 +169,78 @@ export default function ChatAssistant({ context, onMessage, onSolved }: Props) {
         </dl>
       </details>
 
-      <ol className="sh-messages" aria-live="polite">
+      <ol className="sh-messages" aria-live="polite" ref={listRef}>
         {messages.map((m, i) => (
-          <li key={i} className={`sh-msg ${m.from}`}>
+          <li
+            key={i}
+            className={`sh-msg ${m.from}${m.urgency === 'high' ? ' urgent' : ''}`}
+          >
             {m.text}
           </li>
         ))}
+        {busy && (
+          <li className="sh-msg bot typing" aria-label="Mia typt">
+            <span />
+            <span />
+            <span />
+          </li>
+        )}
       </ol>
+
+      {momentHint && (
+        <aside className="sh-moment-card">
+          <strong>{momentCopy[momentHint].title}</strong>
+          <p>{momentCopy[momentHint].blurb}</p>
+          <Link className="btn btn-primary" to="/app">
+            Open klant-prototype →
+          </Link>
+        </aside>
+      )}
+
+      {callback === 'closed' && suggestions.length > 0 && !busy && (
+        <div className="sh-suggestions" aria-label="Snelle antwoorden">
+          {suggestions.map((s) => (
+            <button key={s} type="button" className="sh-chip" onClick={() => void converse(s)}>
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
 
       {callback === 'closed' && (
         <form className="sh-compose" onSubmit={send}>
           <input
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Typ je bericht…"
+            onChange={(e) => setDraft(e.target.value.slice(0, 500))}
+            placeholder="Typ je bericht… (max 500 tekens)"
             aria-label="Bericht"
+            disabled={busy}
+            maxLength={500}
           />
-          <button type="submit" className="btn btn-primary" disabled={!draft.trim()}>
-            Stuur
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={!draft.trim() || busy}
+          >
+            {busy ? '…' : 'Stuur'}
           </button>
         </form>
       )}
 
+      {error && <p className="sh-error">{error}</p>}
+
       {callback === 'closed' && (
         <div className="sh-actions">
-          <button type="button" className="btn btn-ghost" onClick={onSolved}>
+          <button type="button" className="btn btn-ghost" onClick={onSolved} disabled={busy}>
             Opgelost
           </button>
           {botTurns >= 2 && (
-            <button type="button" className="btn btn-ghost" onClick={() => setCallback('form')}>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => setCallback('form')}
+              disabled={busy}
+            >
               Nog niet opgelost → terugbelverzoek
             </button>
           )}
@@ -135,7 +252,7 @@ export default function ChatAssistant({ context, onMessage, onSolved }: Props) {
           <p className="sh-step-title">Laatste stap: een medewerker belt je terug</p>
           <label>
             Telefoonnummer
-            <input type="tel" required placeholder="04xx xx xx xx" />
+            <input type="tel" required placeholder="04xx xx xx xx" maxLength={20} />
           </label>
           <label>
             Moment
@@ -154,7 +271,7 @@ export default function ChatAssistant({ context, onMessage, onSolved }: Props) {
       {callback === 'sent' && (
         <p className="sh-note">
           Terugbelverzoek genoteerd (demo — er wordt niets verstuurd). De medewerker krijgt
-          dezelfde context als de chatbot.
+          dezelfde boom-context + dit chatgesprek.
         </p>
       )}
     </div>

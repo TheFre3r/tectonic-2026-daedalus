@@ -348,11 +348,101 @@ const fraud: Tree = {
   ]),
 }
 
+const lifeHome: Tree = {
+  id: 'life-woning',
+  question: 'Ik koop of verhuis naar een woning',
+  keywords: ['verhuis', 'woning', 'hypotheek', 'notaris', 'huis', 'woonlening', 'brandverzekering'],
+  start: 'fase',
+  nodes: nodes([
+    {
+      kind: 'question',
+      id: 'fase',
+      text: 'Waar zit je in het traject?',
+      options: [
+        { label: 'Oriënteren / simulatie', next: 'oriëntatie' },
+        { label: 'Notaris of voorschot bezig', next: 'hot' },
+        { label: 'Net verhuisd', next: 'verhuisd' },
+      ],
+    },
+    {
+      kind: 'solution',
+      id: 'oriëntatie',
+      title: 'Eerst simuleren, dan pas productpush',
+      steps: [
+        'Gebruik de woonlening-simulator in de app — bewaar je resultaat.',
+        'Zet nog geen beleggingsplan klaar tot het voorschot rond is.',
+        'Tip: open daarna het klant-prototype om te zien hoe “KBC Moment” je home zou herschikken.',
+      ],
+      alt: 'hot',
+    },
+    {
+      kind: 'solution',
+      id: 'hot',
+      title: 'Bescherm woning + liquiditeit',
+      steps: [
+        'Check of brandverzekering al actief is vóór de sleuteloverdracht.',
+        'Houd een buffer na het voorschot; demp agressieve beleggingsaanbiedingen.',
+        'Vraag Mia om een checklist op maat, of speel scenario Verhuizen in /app.',
+      ],
+    },
+    {
+      kind: 'dead-end',
+      id: 'verhuisd',
+      text: 'Net verhuisd vraagt vaak maatwerk (adres, domiciliëringen, verzekering). Mia helpt verder.',
+    },
+  ]),
+}
+
+const lifeJob: Tree = {
+  id: 'life-job',
+  question: 'Ik start mijn eerste job',
+  keywords: ['eerste job', 'starter', 'salaris', 'loon', 'studentenkrediet', 'budget'],
+  start: 'wat',
+  nodes: nodes([
+    {
+      kind: 'question',
+      id: 'wat',
+      text: 'Wat wil je eerst op orde?',
+      options: [
+        { label: 'Mijn eerste loon verdelen', next: 'loon' },
+        { label: 'Studentenkrediet afronden', next: 'krediet' },
+        { label: 'Iets anders / ik weet het niet', next: 'mia' },
+      ],
+    },
+    {
+      kind: 'solution',
+      id: 'loon',
+      title: 'Starter 3-stappenplan',
+      steps: [
+        'Verdeel: vaste kosten / flex / spaar (zelfs €50 telt).',
+        'Zet automatisch sparen aan na je loonstorting.',
+        'Beleggen kan wachten tot je 1 maand buffer hebt.',
+      ],
+    },
+    {
+      kind: 'solution',
+      id: 'krediet',
+      title: 'Studentenkrediet netjes afronden',
+      steps: [
+        'Check de einddatum en openstaand saldo in de app.',
+        'Plan de laatste aflossing rond je loondag.',
+        'Daarna: spaardoel i.p.v. meteen beleggingscampagne.',
+      ],
+    },
+    {
+      kind: 'dead-end',
+      id: 'mia',
+      text: 'Geen standaardpad — Mia stelt gerichte vragen.',
+    },
+  ]),
+}
+
 export const categories: Category[] = [
   { id: 'kaarten', label: 'Kaarten', trees: [cardDeclined, cardLost] },
   { id: 'betalen', label: 'Betalen & overschrijven', trees: [transferMissing] },
   { id: 'app', label: 'App & inloggen', trees: [loginProblem] },
   { id: 'veiligheid', label: 'Fraude & veiligheid', trees: [fraud] },
+  { id: 'leven', label: 'Life moments', trees: [lifeHome, lifeJob] },
 ]
 
 export function searchTrees(query: string): { category: Category; tree: Tree }[] {

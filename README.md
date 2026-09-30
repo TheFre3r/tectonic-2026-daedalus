@@ -6,13 +6,12 @@ Challenge: KBC
 
 ## Description
 
-**KBC Moment** — uitleg + klantgericht prototype voor schaalbare personalisatie via life moments.
+**KBC Moment** — Snelhulp + **Mia** (Gemini) + klant-prototype voor life-moment personalisatie.
 
-- `/` — concept uitleggen  
+- `/` — Snelhulp / Mia / uitleg  
 - `/app` — als klant de flow zelf beleven  
 
-## How to run
-
+Gemini key: zie `kbc-moment-poc/.env.example`
 ```bash
 cd kbc-moment-poc
 npm install

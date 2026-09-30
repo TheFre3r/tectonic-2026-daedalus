@@ -2,35 +2,48 @@
 
 Werkend prototype voor de **KBC-challenge** (Tectonic Hackathon · Team Daedalus).
 
-## Twee pagina’s
+## Routes
 
 | Route | Inhoud |
 | --- | --- |
-| `/` | Uitleg: concept, hoe KBC signalen inziet, interactieve engine-demo |
-| `/app` | **Klant-prototype**: jij speelt de klant (betalen/zoeken → home past aan → advisor-bericht) |
+| `/` | Snelhulp (+ **Mia** Gemini-chat) · uitleg · Moment-engine |
+| `/app` | Klant-prototype (life moments beleven) |
+
+## Mia — live chatbot (Google AI Studio)
+
+1. Maak een gratis key: https://aistudio.google.com/apikey  
+2. In `kbc-moment-poc/`:
+
+```bash
+cp .env.example .env
+# plak je key achter VITE_GEMINI_API_KEY=
+```
+
+3. Herstart `npm run dev`
+
+Zonder key werkt Mia in **slimme lokale modus** (context-aware fallback).  
+Met key: echte Gemini-antwoorden, suggestie-chips, urgency, en life-moment detectie → link naar `/app`.
+
+> Prototype-note: een `VITE_` key zit in de frontend-bundle. Beperk de key in Google AI Studio (referrer) of vervang later door een kleine backend-proxy.
+
+## Snelhulp
+
+- Beslisboom eerst (kaarten, betalen, app, fraude, **life moments**)
+- Escalaties óf knop **Praat met Mia**
+- Chat lazy-loaded; telt self-serve vs chat
 
 ## Klant-prototype (`/app`)
 
-1. Kies persona (Lien / Amir / Sofie) + consent  
-2. Doe acties onder **Betalen** / **Zoeken** / home  
-3. Na genoeg signalen: home schakelt naar moment-modus + checklist  
-4. **Berichten**: gesimuleerde adviseursbriefing (optioneel voice)  
-5. **Ik**: consent, voortgang, reset  
-
-Vereenvoudigingen: geen echte bank-API, geen login, advisor is gesimuleerd, sessie in `sessionStorage`.
-
-Security (licht, prototype): geen geheimen/wachtwoorden, geen vrije tekstinvoer, geen echte klantdata, tab-scoped storage.
+Persona → acties → moment-home → adviseursbericht.
 
 ## Starten
 
 ```bash
+cd kbc-moment-poc
 npm install
 npm run dev
 ```
 
-- Uitleg: http://127.0.0.1:5173/  
-- Klant-app: http://127.0.0.1:5173/app  
-
 ## Stack
 
-Vite · React · TypeScript · React Router · CSS
+Vite · React · TypeScript · React Router · Gemini API (Google AI Studio)
