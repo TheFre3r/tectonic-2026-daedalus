@@ -6,7 +6,10 @@ Challenge: KBC
 
 ## Description
 
-**KBC Moment** — werkend prototype voor schaalbare personalisatie: life moments herkennen uit signalen, intent afleiden, klant-app aanpassen, adviseur briefen, en kanalen orkestreren (privacy-first).
+**KBC Moment** — uitleg + klantgericht prototype voor schaalbare personalisatie via life moments.
+
+- `/` — concept uitleggen  
+- `/app` — als klant de flow zelf beleven  
 
 ## How to run
 
@@ -16,4 +19,6 @@ npm install
 npm run dev
 ```
 
-Open http://127.0.0.1:5173
+Open http://127.0.0.1:5173/ (uitleg) of http://127.0.0.1:5173/app (klant-prototype).
+
+Branch: `feature/customer-prototype`

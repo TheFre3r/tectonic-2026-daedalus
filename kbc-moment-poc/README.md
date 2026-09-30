@@ -2,18 +2,24 @@
 
 Werkend prototype voor de **KBC-challenge** (Tectonic Hackathon · Team Daedalus).
 
-## Wat het doet
+## Twee pagina’s
 
-Volledige flow van het idee “life moments i.p.v. productcampagnes”:
+| Route | Inhoud |
+| --- | --- |
+| `/` | Uitleg: concept, hoe KBC signalen inziet, interactieve engine-demo |
+| `/app` | **Klant-prototype**: jij speelt de klant (betalen/zoeken → home past aan → advisor-bericht) |
 
-1. **Engine** — signalen stromen binnen met gewichten → situatie / gedrag / intent + confidence
-2. **Klant-app** — voor/na mockup (standaard campagnes vs. moment-hub)
-3. **Adviseur** — briefing + voice (browser Speech API) + override
-4. **Kanalen** — app, advies, verzekering, beleggen met toon (begeleiden / beschermen / dempen)
-5. **Privacy** — consent, wat wel/niet gebruikt wordt, retentie
-6. **Schaal** — gesimuleerde dagmetrics voor miljoenen parallelle momenten
+## Klant-prototype (`/app`)
 
-Drie scenario’s: Verhuizen · Eerste job · Zorg voor ouder.
+1. Kies persona (Lien / Amir / Sofie) + consent  
+2. Doe acties onder **Betalen** / **Zoeken** / home  
+3. Na genoeg signalen: home schakelt naar moment-modus + checklist  
+4. **Berichten**: gesimuleerde adviseursbriefing (optioneel voice)  
+5. **Ik**: consent, voortgang, reset  
+
+Vereenvoudigingen: geen echte bank-API, geen login, advisor is gesimuleerd, sessie in `sessionStorage`.
+
+Security (licht, prototype): geen geheimen/wachtwoorden, geen vrije tekstinvoer, geen echte klantdata, tab-scoped storage.
 
 ## Starten
 
@@ -22,17 +28,9 @@ npm install
 npm run dev
 ```
 
-Open de URL van Vite (bv. `http://127.0.0.1:5173`).
-
-## Demo-script (~2 min)
-
-1. Kies scenario **Verhuizen** — laat signalen binnenkomen
-2. Toon confidence + intent op tab **Engine**
-3. Tab **Klant-app** — schakel Voor → Na
-4. Tab **Adviseur** — speel briefing
-5. Tab **Kanalen** / **Privacy** / **Schaal** — orkestratie & schaalbaarheid
-6. Zet consent uit: engine stopt (privacy-by-design)
+- Uitleg: http://127.0.0.1:5173/  
+- Klant-app: http://127.0.0.1:5173/app  
 
 ## Stack
 
-Vite · React · TypeScript · CSS (geen backend; fictieve data)
+Vite · React · TypeScript · React Router · CSS
