@@ -369,7 +369,7 @@ export function HulpTab() {
 
       <p className="cust-hulp-note">
         Prototype. Eerst vaste stappen; daarna Mia
-        {live ? ' via beveiligde Gemini-proxy' : ' (lokale modus — zet GEMINI_API_KEY in .env)'}.
+        {live ? ' via beveiligde Gemini-proxy' : ' (lokale modus — server key ontbreekt)'}.
         {!s.escalation && s.tree ? ` · Terug ${s.backs}/3` : null}
       </p>
     </div>

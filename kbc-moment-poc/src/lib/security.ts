@@ -87,7 +87,7 @@ export function isPlausibleBePhone(value: string): boolean {
 export const SECURITY_BADGE = {
   title: 'Superman security (Aikido-ready)',
   points: [
-    'Geen API-keys in de frontend-bundle (alleen server GEMINI_API_KEY)',
+    'Geen API-keys in de frontend-bundle (alleen server-side key)',
     'CSRF-sessie (HttpOnly cookie + X-CSRF-Token) op /api/mia',
     'Same-origin enforcement + Content-Type allowlist',
     'Rate limiting client én proxy; payload size caps',
