@@ -16,6 +16,7 @@ export function ExplainPage() {
         <div className="nav-links">
           <span className="nav-meta">Uitleg · Team Daedalus</span>
           <a href="#moment">KBC Moment</a>
+          <a href="#chat-hulp">Chat hulp</a>
           <ThemeToggle />
           <Link className="btn btn-primary nav-cta" to="/app">
             Open klant-prototype
@@ -88,6 +89,55 @@ export function ExplainPage() {
             </span>
           </li>
         </ol>
+      </section>
+
+      <section className="explain chat-hulp-explain" id="chat-hulp">
+        <div className="section-head">
+          <h2>Chat hulp: waarom niet meteen een chatbot?</h2>
+          <p>
+            In het klant-prototype zit een tab <strong>Chat hulp</strong>. Die
+            voelt als berichten sturen — maar de AI-chatbot is bewust de
+            <em> laatste</em> stap, niet de eerste.
+          </p>
+        </div>
+
+        <ol className="flow-steps">
+          <li>
+            <strong>1. Eerst vaste opties (beslisboom)</strong>
+            <span>
+              De klant kiest of typt een vraag en krijgt gerichte keuzes. Zo
+              kan die meteen aan de slag — zonder te wachten op een AI-antwoord
+              en zonder elk gesprek te betalen.
+            </span>
+          </li>
+          <li>
+            <strong>2. Chatbot pas als last resort</strong>
+            <span>
+              Alleen als de boom vastloopt (geen passende tak, oplossing werkt
+              niet, of zoekopdracht geeft niets) komt de chatassistent tussen —
+              met de context van wat de klant al koos.
+            </span>
+          </li>
+          <li>
+            <strong>3. Cost-efficient bij opschalen</strong>
+            <span>
+              Bij miljoenen klanten kun je niet kostenefficiënt élke vraag door
+              een chatbot laten lopen. Vaste stappen zijn goedkoop en
+              voorspelbaar; de chatbot draagt alleen de restgroep die écht
+              menselijke of AI-hulp nodig heeft.
+            </span>
+          </li>
+        </ol>
+
+        <div className="chat-hulp-callout">
+          <p>
+            <strong>Kort:</strong> opties eerst → klant helpt zichzelf → chatbot
+            als vangnet. Dat houdt hulp snel, schaalbaar én betaalbaar.
+          </p>
+          <Link className="btn btn-primary" to="/app">
+            Probeer Chat hulp in het prototype →
+          </Link>
+        </div>
       </section>
 
       <section className="explain know" id="hoe-weet-kbc">

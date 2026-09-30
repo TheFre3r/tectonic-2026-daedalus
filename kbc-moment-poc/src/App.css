@@ -309,6 +309,26 @@ input {
   font-size: 0.95rem;
 }
 
+.chat-hulp-callout {
+  margin-top: 1.25rem;
+  padding: 1.15rem 1.25rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--panel, rgba(255, 255, 255, 0.72));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.chat-hulp-callout p {
+  margin: 0;
+  max-width: 38rem;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
 .know-grid {
   display: grid;
   gap: 1rem;
