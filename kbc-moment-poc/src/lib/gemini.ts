@@ -1,4 +1,5 @@
 import type { ChatContext } from '../hooks/useSnelhulp'
+import { allowRequest, sanitizeText } from './security'
 
 export type MomentHint = 'verhuizen' | 'eerste-job' | 'zorgmoment' | null
 
@@ -11,18 +12,13 @@ export type MiaReply = {
 
 export type ChatTurn = { role: 'user' | 'model'; text: string }
 
-/* Lite eerst: minder 503 “high demand” op de gratis tier. */
-const MODEL_CANDIDATES = [
-  import.meta.env.VITE_GEMINI_MODEL,
-  'gemini-flash-lite-latest',
-  'gemini-3.1-flash-lite',
-  'gemini-3.5-flash-lite',
-  'gemini-flash-latest',
-  'gemini-3.8-flash',
-  'gemini-3.5-flash',
-].filter(Boolean) as string[]
+/** Live preferred via server proxy (key not in browser). */
+export function isMiaLivePreferred(): boolean {
+  return true
+}
 
 export function getGeminiApiKey(): string | null {
+  // Deprecated client key — only last-resort for static previews.
   const key = import.meta.env.VITE_GEMINI_API_KEY
   if (typeof key === 'string' && key.trim().length > 8) return key.trim()
   return null
@@ -35,34 +31,22 @@ Je helpt klanten met bankvragen: kaarten, betalingen, app, fraude, oplichting.
 Je bent GEEN echte bankmedewerker: zeg nooit dat je een betaling uitvoert of een kaart écht blokkeert.
 Geef wel praktische stappen die iemand in een echte app zou doen.
 
-CONTEXT VAN DE BESLISBOOM (gebruik dit actief, herhaal niet klakkeloos):
+CONTEXT VAN DE BESLISBOOM:
 - Escalatie: ${context.reason}
 - Rubriek: ${context.category ?? '—'}
 - Vraag: ${context.question ?? '—'}
 - Zoekopdracht: ${context.searchQuery ?? '—'}
-- Antwoorden van de klant: ${
+- Antwoorden: ${
     context.answers.length
       ? context.answers.map((a) => `${a.question} → ${a.answer}`).join(' | ')
       : '—'
   }
 - Al geprobeerd: ${context.tried.length ? context.tried.join(', ') : '—'}
 
-KBC MOMENT (extra intelligentie):
-Als de klant hints geeft over een life moment, zet momentHint:
-- verhuizen: huis kopen, notaris, hypotheek, adreswijziging
-- eerste-job: eerste loon, starter, studentenkrediet, budget leren
-- zorgmoment: zorgkosten, uitstel, cashflow-druk, ouder helpen
-Anders momentHint = null.
-
-Antwoord ALTIJD als JSON-object (geen markdown fences):
-{
-  "reply": "tekst aan de klant, max ~120 woorden, mag korte opsommingen",
-  "suggestions": ["korte snelle reply 1", "snelle reply 2", "snelle reply 3"],
-  "momentHint": null,
-  "urgency": "low"
-}
-urgency = high bij fraude/phishing/oplichting/gestolen kaart; medium bij blokkades; low anders.
-suggestions: 2-3 korte zinnen die de klant kan aantikken als volgend bericht.`
+momentHint: verhuizen | eerste-job | zorgmoment | null
+Antwoord ALTIJD als JSON:
+{"reply":"...","suggestions":["..."],"momentHint":null,"urgency":"low"}
+urgency = high bij fraude/oplichting.`
 }
 
 function parseMiaReply(raw: string): MiaReply {
@@ -81,23 +65,17 @@ function parseMiaReply(raw: string): MiaReply {
         ? hint
         : null
     return {
-      reply:
-        String(json.reply ?? raw).trim() ||
-        'Sorry, ik kon daar geen antwoord op formuleren.',
+      reply: sanitizeText(String(json.reply ?? raw), 1200),
       suggestions: Array.isArray(json.suggestions)
-        ? json.suggestions.map(String).filter(Boolean).slice(0, 3)
+        ? json.suggestions.map((s) => sanitizeText(s, 80)).filter(Boolean).slice(0, 3)
         : [],
       momentHint,
       urgency:
-        json.urgency === 'high' || json.urgency === 'medium'
-          ? json.urgency
-          : 'low',
+        json.urgency === 'high' || json.urgency === 'medium' ? json.urgency : 'low',
     }
   } catch {
     return {
-      reply:
-        cleaned ||
-        'Er ging iets mis bij het parsen van mijn antwoord. Probeer opnieuw.',
+      reply: sanitizeText(cleaned, 1200) || 'Er ging iets mis bij het parsen.',
       suggestions: ['Leg het anders uit', 'Ik wil een medewerker'],
       momentHint: null,
       urgency: 'low',
@@ -105,109 +83,105 @@ function parseMiaReply(raw: string): MiaReply {
   }
 }
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-async function callModel(
-  model: string,
-  apiKey: string,
+async function askViaSecureProxy(
   context: ChatContext,
   history: ChatTurn[],
 ): Promise<string> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
-  const contents = history.map((turn) => ({
-    role: turn.role,
-    parts: [{ text: turn.text }],
+  const safeHistory = history.slice(-24).map((t) => ({
+    role: t.role,
+    text: sanitizeText(t.text, 500),
   }))
 
-  const body = JSON.stringify({
-    systemInstruction: { parts: [{ text: systemPrompt(context) }] },
-    contents,
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 700,
-      responseMimeType: 'application/json',
-    },
+  const res = await fetch('/api/mia', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ context, history: safeHistory }),
   })
-
-  let lastStatus = 0
-  let lastBody = ''
-
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey,
-      },
-      body,
-    })
-
-    lastStatus = res.status
-    if (res.ok) {
-      const data = (await res.json()) as {
-        candidates?: { content?: { parts?: { text?: string }[] } }[]
-      }
-      const text =
-        data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ??
-        ''
-      if (!text.trim()) throw new Error(`Lege response van ${model}`)
-      return text
-    }
-
-    lastBody = await res.text().catch(() => '')
-    // 503 high demand → korte retry, daarna volgend model
-    if (res.status === 503 && attempt === 0) {
-      await sleep(400)
-      continue
-    }
-    break
+  const data = (await res.json().catch(() => ({}))) as {
+    raw?: string
+    error?: string
   }
-
-  throw new Error(`Gemini ${model} ${lastStatus}: ${lastBody.slice(0, 220)}`)
+  if (!res.ok) throw new Error(data.error || `Proxy ${res.status}`)
+  if (!data.raw?.trim()) throw new Error('Empty proxy response')
+  return data.raw
 }
 
 function explainFailure(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err)
-  if (msg.includes('503') || /high demand|UNAVAILABLE/i.test(msg)) {
-    return 'Gemini is even overbelast (503). Ik antwoord lokaal; probeer zo opnieuw.'
+  if (msg.includes('503') || /high demand|UNAVAILABLE|not configured/i.test(msg)) {
+    return 'Gemini tijdelijk onbereikbaar of niet geconfigureerd. Lokale modus.'
   }
-  if (msg.includes('429')) {
-    return 'Gemini-quotum even bereikt. Ik antwoord lokaal; probeer zo opnieuw.'
+  if (msg.includes('429') || /Rate limit/i.test(msg)) {
+    return 'Te veel verzoeken — even wachten (rate limit).'
   }
   if (msg.includes('400') || msg.includes('401') || msg.includes('403')) {
-    return 'API-key of request geweigerd. Check VITE_GEMINI_API_KEY in .env.'
+    return 'Request geweigerd door security-laag of API.'
   }
-  return 'Gemini reageerde niet. Ik antwoord lokaal.'
+  return 'Gemini reageerde niet. Lokale modus.'
 }
 
 export async function askMia(
   context: ChatContext,
   history: ChatTurn[],
 ): Promise<MiaReply> {
-  const apiKey = getGeminiApiKey()
-  if (!apiKey) {
-    return localFallback(context, history)
+  if (!allowRequest('mia-client', 12, 60_000)) {
+    const fallback = localFallback(context, history)
+    fallback.reply = `${fallback.reply}\n\n(Rate limit: max 12 Mia-berichten / minuut.)`
+    return fallback
   }
 
-  let lastError: unknown
-  for (const model of MODEL_CANDIDATES) {
+  try {
+    const raw = await askViaSecureProxy(context, history)
+    return parseMiaReply(raw)
+  } catch (proxyErr) {
+    const apiKey = getGeminiApiKey()
+    if (!apiKey) {
+      console.warn('Mia proxy failed', proxyErr)
+      const fallback = localFallback(context, history)
+      fallback.reply = `${fallback.reply}\n\n(${explainFailure(proxyErr)})`
+      return fallback
+    }
     try {
-      const raw = await callModel(model, apiKey, context, history)
-      return parseMiaReply(raw)
+      const contents = history.map((turn) => ({
+        role: turn.role,
+        parts: [{ text: sanitizeText(turn.text, 500) }],
+      }))
+      const res = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey,
+          },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemPrompt(context) }] },
+            contents,
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 700,
+              responseMimeType: 'application/json',
+            },
+          }),
+        },
+      )
+      if (!res.ok) throw new Error(`Gemini ${res.status}`)
+      const data = (await res.json()) as {
+        candidates?: { content?: { parts?: { text?: string }[] } }[]
+      }
+      const text =
+        data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ??
+        ''
+      return parseMiaReply(text)
     } catch (err) {
-      lastError = err
+      console.warn('Mia all paths failed', err)
+      const fallback = localFallback(context, history)
+      fallback.reply = `${fallback.reply}\n\n(${explainFailure(err)})`
+      return fallback
     }
   }
-
-  console.warn('Mia Gemini failed, using local fallback', lastError)
-  const fallback = localFallback(context, history)
-  fallback.reply = `${fallback.reply}\n\n(${explainFailure(lastError)})`
-  return fallback
 }
 
-/** Slimme lokale fallback — context-aware als Gemini down is. */
 function localFallback(context: ChatContext, history: ChatTurn[]): MiaReply {
   const lastUser =
     [...history].reverse().find((h) => h.role === 'user')?.text.toLowerCase() ??
@@ -241,31 +215,27 @@ function localFallback(context: ChatContext, history: ChatTurn[]): MiaReply {
     reply =
       'Dit klinkt als mogelijke oplichting of fraude. Blokkeer verdachte kaarten/toegang in de app, bel Card Stop (078 170 170) als er een kaart bij betrokken is, en bewaar screenshots/berichten. Deel nooit codes of itsme-bevestigingen. In deze demo blokkeer ik niets écht — wel loods ik je door de stappen. Wat is er precies gebeurd (app, betaling, bericht)?'
   } else if (context.reason === 'no-results') {
-    reply = `Je zocht op “${context.searchQuery}”. Vertel in één zin wat je ziet (foutmelding, scherm, bedrag). Dan geef ik gerichte stappen — of ik wijs je naar de juiste checklist.`
+    reply = `Je zocht op “${sanitizeText(context.searchQuery ?? '', 120)}”. Vertel in één zin wat je ziet (foutmelding, scherm, bedrag). Dan geef ik gerichte stappen.`
   } else if (context.tried.length) {
-    reply = `Ik zie dat je al probeerde: ${context.tried.join(', ')}. Die sla ik over. ${
-      path ? `Op basis van je keuzes (${path}) ` : ''
-    }probeer dit: herstart de app, check limieten onder Kaarten, en wacht 10 minuten na een wijziging. Wat zie je daarna precies?`
+    reply = `Ik zie dat je al probeerde: ${context.tried.join(', ')}. ${
+      path ? `Op basis van (${path}) ` : ''
+    }probeer: herstart de app, check limieten, wacht 10 minuten. Wat zie je daarna?`
   } else {
     reply = `${
       context.question ? `Over “${context.question}”: ` : ''
-    }ik help je stap voor stap. Beschrijf kort de foutmelding of wat er misloopt — hoe concreter, hoe scherper mijn advies.`
+    }beschrijf kort de foutmelding — hoe concreter, hoe scherper mijn advies.`
   }
 
   if (momentHint) {
     reply +=
-      ' Tussen haakjes: dit lijkt ook op een life moment. Je kunt in het klant-prototype zien hoe KBC Moment je home daarop zou aanpassen.'
+      ' Dit lijkt ook op een life moment — bekijk het klant-prototype voor de aangepaste home.'
   }
 
   return {
     reply,
     suggestions:
       urgency === 'high'
-        ? [
-            'Kaart blokkeren',
-            'Ik deelde een code / itsme',
-            'Onbekende betaling melden',
-          ]
+        ? ['Kaart blokkeren', 'Ik deelde een code / itsme', 'Onbekende betaling melden']
         : ['Dit is de foutmelding…', 'Ik wil een medewerker', 'Het is opgelost'],
     momentHint,
     urgency,

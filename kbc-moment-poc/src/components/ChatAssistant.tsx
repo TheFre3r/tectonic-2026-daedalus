@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { askMia, getGeminiApiKey, type MiaReply } from '../lib/gemini'
+import { askMia, isMiaLivePreferred, type MiaReply } from '../lib/gemini'
+import { sanitizeText } from '../lib/security'
 import { reasonLabel, type ChatContext } from '../hooks/useSnelhulp'
 
 type Props = {
@@ -49,7 +50,7 @@ function openingFor(ctx: ChatContext, live: boolean): string {
 }
 
 export default function ChatAssistant({ context, onMessage, onSolved }: Props) {
-  const live = Boolean(getGeminiApiKey())
+  const live = isMiaLivePreferred()
   const [messages, setMessages] = useState<Message[]>([
     { from: 'bot', text: openingFor(context, live) },
   ])
@@ -71,7 +72,7 @@ export default function ChatAssistant({ context, onMessage, onSolved }: Props) {
   }, [messages, busy])
 
   async function converse(userText: string) {
-    const trimmed = userText.trim()
+    const trimmed = sanitizeText(userText, 500)
     if (!trimmed || busy) return
 
     onMessage()
@@ -122,12 +123,11 @@ export default function ChatAssistant({ context, onMessage, onSolved }: Props) {
 
   return (
     <div className="sh-chat">
-      <div className={`sh-mia-banner ${live ? 'live' : 'local'}`}>
-        <strong>{live ? 'Live · Google AI Studio (Gemini)' : 'Lokale modus'}</strong>
+          <div className={`sh-mia-banner live`}>
+        <strong>Live · beveiligde proxy (/api/mia)</strong>
         <span>
-          {live
-            ? 'Antwoorden via gratis Gemini API met jouw boom-context.'
-            : 'Zet VITE_GEMINI_API_KEY in .env voor live Mia. Nu: slimme offline fallback.'}
+          API-key blijft op de server. Browser praat alleen met same-origin
+          endpoint + rate limits.
         </span>
       </div>
 

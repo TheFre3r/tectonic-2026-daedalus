@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
 import { PrototypeDemo } from '../components/PrototypeDemo'
+import { ResourceFlowchart } from '../components/ResourceFlowchart'
 import { ThemeToggle } from '../components/ThemeToggle'
 import { useMomentDemo } from '../hooks/useMomentDemo'
+import { SECURITY_BADGE } from '../lib/security'
 
 export function ExplainPage() {
   const demo = useMomentDemo()
@@ -16,7 +18,8 @@ export function ExplainPage() {
         <div className="nav-links">
           <span className="nav-meta">Uitleg · Team Daedalus</span>
           <a href="#moment">KBC Moment</a>
-          <a href="#chat-hulp">Chat hulp</a>
+          <a href="#resources">Support-flow</a>
+          <a href="#security">Security</a>
           <ThemeToggle />
           <Link className="btn btn-primary nav-cta" to="/app">
             Open klant-prototype
@@ -138,6 +141,23 @@ export function ExplainPage() {
             Probeer Chat hulp in het prototype →
           </Link>
         </div>
+      </section>
+
+      <ResourceFlowchart />
+
+      <section className="explain" id="security">
+        <div className="section-head">
+          <h2>{SECURITY_BADGE.title}</h2>
+          <p>
+            Cyberweerbaarheid meegenomen in dit prototype — niet theater, wel
+            defense-in-depth voor een demo die wél online mag.
+          </p>
+        </div>
+        <ul className="security-grid">
+          {SECURITY_BADGE.points.map((p) => (
+            <li key={p}>{p}</li>
+          ))}
+        </ul>
       </section>
 
       <section className="explain know" id="hoe-weet-kbc">

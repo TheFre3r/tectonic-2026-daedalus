@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { searchTrees } from '../data/trees'
-import { askMia, getGeminiApiKey } from '../lib/gemini'
+import { askMia, isMiaLivePreferred } from '../lib/gemini'
+import { sanitizeText } from '../lib/security'
 import { reasonLabel, useSnelhulp, type ChatContext } from '../hooks/useSnelhulp'
 
 type Bubble = {
@@ -35,7 +36,7 @@ function openingAfterEscalate(ctx: ChatContext, live: boolean): string {
  */
 export function HulpTab() {
   const s = useSnelhulp()
-  const live = Boolean(getGeminiApiKey())
+  const live = isMiaLivePreferred()
   const [draft, setDraft] = useState('')
   const [extra, setExtra] = useState<Bubble[]>([])
   const [botTurns, setBotTurns] = useState(0)
@@ -146,7 +147,7 @@ export function HulpTab() {
 
   function send(e: FormEvent) {
     e.preventDefault()
-    const text = draft.trim()
+    const text = sanitizeText(draft, 500)
     if (!text || busy) return
     setDraft('')
 

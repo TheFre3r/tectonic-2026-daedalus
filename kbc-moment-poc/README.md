@@ -6,35 +6,27 @@ Werkend prototype voor de **KBC-challenge** (Tectonic Hackathon · Team Daedalus
 
 | Route | Inhoud |
 | --- | --- |
-| `/` | Snelhulp (+ **Mia** Gemini-chat) · uitleg · Moment-engine |
-| `/app` | Klant-prototype (life moments beleven) |
+| `/` | Uitleg · **support resource flowchart** · Moment-engine · security |
+| `/app` | **Klant-prototype** + live why + views voor adviseur/verzekering/beleggen/ops |
 
-## Mia — live chatbot (Google AI Studio)
+## Mia (Gemini) — veilig
 
-1. Maak een gratis key: https://aistudio.google.com/apikey  
-2. In `kbc-moment-poc/`:
+1. Key van https://aistudio.google.com/apikey  
+2. In `kbc-moment-poc/.env` (**niet** committen):
 
 ```bash
-cp .env.example .env
-# plak je key achter VITE_GEMINI_API_KEY=
+GEMINI_API_KEY=jouw_key
 ```
 
-3. Herstart `npm run dev`
+3. `npm run dev` — browser praat met **`/api/mia`** (key blijft op de server)
 
-Zonder key werkt Mia in **slimme lokale modus** (context-aware fallback).  
-Met key: echte Gemini-antwoorden, suggestie-chips, urgency, en life-moment detectie → link naar `/app`.
+## Security (superman-laag)
 
-> Prototype-note: een `VITE_` key zit in de frontend-bundle. Beperk de key in Google AI Studio (referrer) of vervang later door een kleine backend-proxy.
-
-## Snelhulp
-
-- Beslisboom eerst (kaarten, betalen, app, fraude, **life moments**)
-- Escalaties óf knop **Praat met Mia**
-- Chat lazy-loaded; telt self-serve vs chat
-
-## Klant-prototype (`/app`)
-
-Persona → acties → moment-home → adviseursbericht.
+- Server-side Gemini proxy + rate limits  
+- CSP + security headers  
+- Input sanitization / max length  
+- Geen secrets in de frontend-bundle (als je `VITE_`-key weglaat)  
+- sessionStorage only, vaste actie-allowlists  
 
 ## Starten
 
@@ -43,7 +35,3 @@ cd kbc-moment-poc
 npm install
 npm run dev
 ```
-
-## Stack
-
-Vite · React · TypeScript · React Router · Gemini API (Google AI Studio)

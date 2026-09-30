@@ -5,8 +5,11 @@ import type { CustomerAction } from '../data/customerActions'
 import type { AppTab } from '../hooks/useCustomerSession'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { HulpTab } from './HulpTab'
+import { LiveWhy } from './LiveWhy'
+import { PartyViews } from './PartyViews'
 import { SpeakButton } from './SpeakButton'
 import { ThemeToggle } from './ThemeToggle'
+import { SECURITY_BADGE } from '../lib/security'
 
 type Session = ReturnType<typeof useCustomerSession>
 
@@ -322,9 +325,8 @@ function Onboarding({ session }: { session: Session }) {
         </Link>
       </div>
       <p className="security-note">
-        Prototype-veiligheid (basis): geen echte wachtwoorden of klantdata,
-        sessie alleen in deze browsertab (sessionStorage), alleen vaste knoppen
-        (geen vrije tekstinvoer).
+        <strong>{SECURITY_BADGE.title}:</strong> {SECURITY_BADGE.points[0]};{' '}
+        {SECURITY_BADGE.points[2]}; {SECURITY_BADGE.points[3]}.
       </p>
     </div>
   )
@@ -351,11 +353,11 @@ export function CustomerPrototype() {
   ]
 
   return (
-    <div className="cust-page">
+    <div className="cust-page cust-page-wide">
       <header className="cust-top">
         <div>
           <strong>KBC Moment</strong>
-          <span>Klant-prototype</span>
+          <span>Klant-prototype · multi-party</span>
         </div>
         <div className="cust-top-actions">
           <ThemeToggle />
@@ -365,48 +367,55 @@ export function CustomerPrototype() {
         </div>
       </header>
 
-      <div className="cust-phone-frame">
-        <div className="cust-status">
-          <span>09:41</span>
-          <span>{session.momentActive ? 'Moment actief' : 'Standaard'}</span>
+      <div className="cust-workspace">
+        <div className="cust-phone-frame">
+          <div className="cust-status">
+            <span>09:41</span>
+            <span>{session.momentActive ? 'Moment actief' : 'Standaard'}</span>
+          </div>
+
+          <main className="cust-main">
+            {session.tab === 'home' && <HomeTab session={session} />}
+            {session.tab === 'betalen' && (
+              <ActionsTab
+                session={session}
+                tab="betalen"
+                title="Betalen"
+                lead="Simuleer betalingen die in het echt ook zichtbaar zouden zijn."
+              />
+            )}
+            {session.tab === 'zoeken' && (
+              <ActionsTab
+                session={session}
+                tab="zoeken"
+                title="Zoeken"
+                lead="Simuleer zoekgedrag in de app — dat zijn ook signalen."
+              />
+            )}
+            {session.tab === 'hulp' && <HulpTab />}
+            {session.tab === 'berichten' && <MessagesTab session={session} />}
+            {session.tab === 'ik' && <ProfileTab session={session} />}
+          </main>
+
+          <nav className="cust-nav" aria-label="Hoofdmenu">
+            {tabs.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                className={session.tab === t.id ? 'active' : ''}
+                onClick={() => session.setTab(t.id)}
+              >
+                {t.label}
+                {t.badge ? <i className="badge" aria-label="nieuw" /> : null}
+              </button>
+            ))}
+          </nav>
         </div>
 
-        <main className="cust-main">
-          {session.tab === 'home' && <HomeTab session={session} />}
-          {session.tab === 'betalen' && (
-            <ActionsTab
-              session={session}
-              tab="betalen"
-              title="Betalen"
-              lead="Simuleer betalingen die in het echt ook zichtbaar zouden zijn."
-            />
-          )}
-          {session.tab === 'zoeken' && (
-            <ActionsTab
-              session={session}
-              tab="zoeken"
-              title="Zoeken"
-              lead="Simuleer zoekgedrag in de app — dat zijn ook signalen."
-            />
-          )}
-          {session.tab === 'hulp' && <HulpTab />}
-          {session.tab === 'berichten' && <MessagesTab session={session} />}
-          {session.tab === 'ik' && <ProfileTab session={session} />}
-        </main>
-
-        <nav className="cust-nav" aria-label="Hoofdmenu">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              className={session.tab === t.id ? 'active' : ''}
-              onClick={() => session.setTab(t.id)}
-            >
-              {t.label}
-              {t.badge ? <i className="badge" aria-label="nieuw" /> : null}
-            </button>
-          ))}
-        </nav>
+        <div className="cust-side">
+          <LiveWhy session={session} />
+          <PartyViews session={session} />
+        </div>
       </div>
 
       {session.toast && <div className="cust-toast">{session.toast}</div>}
