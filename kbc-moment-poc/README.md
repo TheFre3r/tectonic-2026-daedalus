@@ -20,9 +20,9 @@ GEMINI_API_KEY=jouw_key
 
 3. `npm run dev` — browser praat met **`/api/mia`** (key blijft op de server)
 
-Zie [SECURITY.md](./SECURITY.md) voor Aikido-gerichte hardening.
+Zie [SECURITY.md](./SECURITY.md) voor de hardening-aanpak.
 
-## Security (Aikido-ready)
+## Security
 
 - Server-only `GEMINI_API_KEY` (geen `VITE_`-secrets in de bundle)
 - CSRF (HttpOnly cookie + `X-CSRF-Token`) + same-origin op `/api/mia`

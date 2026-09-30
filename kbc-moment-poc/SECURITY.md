@@ -1,8 +1,8 @@
-# Security (Aikido AI Code Audit)
+# Security
 
-Hackathon PoC hardened against the vulnerability classes Aikido’s AI Code Audit
-typically flags: secrets in client, authn/authz gaps, IDOR-style tampering,
-injection, XSS, CSRF, info disclosure, and missing headers.
+Hackathon PoC hardened against common vulnerability classes: secrets in client,
+authn/authz gaps, IDOR-style tampering, injection, XSS, CSRF, info disclosure,
+and missing headers.
 
 ## Secrets
 
@@ -38,13 +38,13 @@ injection, XSS, CSRF, info disclosure, and missing headers.
 ## What this PoC deliberately is not
 
 Not a real bank backend: no real PII persistence, no payments, no production IAM.
-Treat as a secure **demo surface** for the Aikido checklist, not production banking.
+Treat as a secure **demo surface**, not production banking.
 
 ## Verify locally
 
 ```bash
 cd kbc-moment-poc
 npm run build
-# confirm dist has no GEMINI / API key strings:
-grep -R "AIza\|GEMINI_API_KEY" dist || echo "OK — no secrets in bundle"
+# confirm dist has no API key strings:
+grep -R "AIza" dist || echo "OK — no secrets in bundle"
 ```

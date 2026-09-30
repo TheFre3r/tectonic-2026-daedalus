@@ -1,5 +1,5 @@
 /**
- * Defense-in-depth for Aikido / hackathon security review.
+ * Defense-in-depth for hackathon security review.
  */
 
 const CONTROL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g
@@ -85,7 +85,7 @@ export function isPlausibleBePhone(value: string): boolean {
 }
 
 export const SECURITY_BADGE = {
-  title: 'Superman security (Aikido-ready)',
+  title: 'Superman security',
   points: [
     'Geen API-keys in de frontend-bundle (alleen server-side key)',
     'CSRF-sessie (HttpOnly cookie + X-CSRF-Token) op /api/mia',
