@@ -135,9 +135,19 @@ export function useSnelhulp() {
   }
 
   function escalateFromSearch() {
+    escalateFromSearchWithQuery(query.trim())
+  }
+
+  function escalateFromSearchWithQuery(searchQuery: string) {
     reset()
     setChatLoaded(true)
-    setEscalation({ reason: 'no-results', answers: [], tried: [], searchQuery: query.trim() })
+    setQuery(searchQuery)
+    setEscalation({
+      reason: 'no-results',
+      answers: [],
+      tried: [],
+      searchQuery: searchQuery.trim(),
+    })
   }
 
   function chatSolved() {
@@ -156,6 +166,7 @@ export function useSnelhulp() {
     treeCategory,
     node,
     depth: path.length,
+    answers,
     notSolved,
     backs,
     query,
@@ -172,6 +183,7 @@ export function useSnelhulp() {
     markSolved,
     markNotSolved,
     escalateFromSearch,
+    escalateFromSearchWithQuery,
     chatSolved,
     countChatMessage,
     reset,

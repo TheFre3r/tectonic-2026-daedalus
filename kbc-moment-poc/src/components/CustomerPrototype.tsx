@@ -4,6 +4,7 @@ import type { AppScreen } from '../data/scenarios'
 import type { CustomerAction } from '../data/customerActions'
 import type { AppTab } from '../hooks/useCustomerSession'
 import { useCustomerSession } from '../hooks/useCustomerSession'
+import { HulpTab } from './HulpTab'
 import { SpeakButton } from './SpeakButton'
 import { ThemeToggle } from './ThemeToggle'
 
@@ -344,6 +345,7 @@ export function CustomerPrototype() {
     { id: 'home', label: 'Home' },
     { id: 'betalen', label: 'Betalen' },
     { id: 'zoeken', label: 'Zoeken' },
+    { id: 'hulp', label: 'Chat hulp' },
     { id: 'berichten', label: 'Berichten', badge: session.unreadAdvisor },
     { id: 'ik', label: 'Ik' },
   ]
@@ -387,6 +389,7 @@ export function CustomerPrototype() {
               lead="Simuleer zoekgedrag in de app — dat zijn ook signalen."
             />
           )}
+          {session.tab === 'hulp' && <HulpTab />}
           {session.tab === 'berichten' && <MessagesTab session={session} />}
           {session.tab === 'ik' && <ProfileTab session={session} />}
         </main>

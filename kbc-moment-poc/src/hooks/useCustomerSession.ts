@@ -8,7 +8,7 @@ import {
 } from '../data/customerActions'
 import { buildInference } from '../engine/momentEngine'
 
-export type AppTab = 'home' | 'betalen' | 'zoeken' | 'berichten' | 'ik'
+export type AppTab = 'home' | 'betalen' | 'zoeken' | 'hulp' | 'berichten' | 'ik'
 
 type Persisted = {
   scenarioId: string
