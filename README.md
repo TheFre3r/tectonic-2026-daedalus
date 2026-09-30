@@ -6,7 +6,7 @@ Challenge: KBC
 
 ## Description
 
-**KBC Moment** — PoC voor schaalbare personalisatie: life moments herkennen uit signalen, intent afleiden, en de ervaring aanpassen over app, advies, verzekering en beleggen.
+**KBC Moment** — werkend prototype voor schaalbare personalisatie: life moments herkennen uit signalen, intent afleiden, klant-app aanpassen, adviseur briefen, en kanalen orkestreren (privacy-first).
 
 ## How to run
 

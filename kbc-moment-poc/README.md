@@ -1,55 +1,38 @@
-# KBC Moment — PoC (Team Daedalus)
+# KBC Moment — Prototype demo
 
-Voorbeeld voor de **KBC-challenge** op de Tectonic Hackathon.
+Werkend prototype voor de **KBC-challenge** (Tectonic Hackathon · Team Daedalus).
 
-## Wat KBC vraagt (kort)
+## Wat het doet
 
-Geen “nog een feature”, maar een **visie + proof of concept** voor schaalbare personalisatie:
+Volledige flow van het idee “life moments i.p.v. productcampagnes”:
 
-1. Welke **signalen** tonen wat een klant nodig heeft?
-2. Hoe herken je **situatie, gedrag en intent**?
-3. Hoe past de ervaring zich **automatisch** aan?
-4. Hoe werkt dat **over producten en kanalen**?
-5. Hoe schaal je dat naar **2,3M+ klanten**?
+1. **Engine** — signalen stromen binnen met gewichten → situatie / gedrag / intent + confidence
+2. **Klant-app** — voor/na mockup (standaard campagnes vs. moment-hub)
+3. **Adviseur** — briefing + voice (browser Speech API) + override
+4. **Kanalen** — app, advies, verzekering, beleggen met toon (begeleiden / beschermen / dempen)
+5. **Privacy** — consent, wat wel/niet gebruikt wordt, retentie
+6. **Schaal** — gesimuleerde dagmetrics voor miljoenen parallelle momenten
 
-## Ons voorbeeldantwoord: KBC Moment
-
-**Idee:** KBC denkt in *life moments* (verhuizen, eerste job, zorg voor ouder…), niet in losse productcampagnes.
-
-| Laag | Wat de PoC toont |
-| --- | --- |
-| Signalen | Live feed van betalingen, app-gedrag, verzekeringsstatus, context |
-| Herkenning | Situatie + intent + confidence score |
-| Adaptatie | App / adviseur / verzekering / beleggen krijgen elk een andere, passende actie |
-| Schaal | Zelfde moment-engine voor elk scenario — event-driven, herbruikbaar |
-
-Dit is een **demo-UI** met fictieve scenario’s. Geen echte klantdata.
+Drie scenario’s: Verhuizen · Eerste job · Zorg voor ouder.
 
 ## Starten
 
 ```bash
-cd kbc-moment-poc
 npm install
 npm run dev
 ```
 
-Open de URL die Vite toont (meestal `http://localhost:5173`).
+Open de URL van Vite (bv. `http://127.0.0.1:5173`).
 
-## Wat judges willen zien
+## Demo-script (~2 min)
 
-Volgens de guide scoren ze op:
+1. Kies scenario **Verhuizen** — laat signalen binnenkomen
+2. Toon confidence + intent op tab **Engine**
+3. Tab **Klant-app** — schakel Voor → Na
+4. Tab **Adviseur** — speel briefing
+5. Tab **Kanalen** / **Privacy** / **Schaal** — orkestratie & schaalbaarheid
+6. Zet consent uit: engine stopt (privacy-by-design)
 
-1. **Creativity** — originele visie (moments i.p.v. features)
-2. **Technical ability** — werkende demo
-3. **Fit** — lost de challenge-vragen op
-4. **Security** — Aikido-audit op jullie repo (10%)
+## Stack
 
-Inzending via Builderbase: korte beschrijving, demovideo (<3 min), GitHub-link, Aikido before/after screenshots.
-
-## Volgende stappen voor het echte hackathon-werk
-
-- Echte (gesimuleerde) API / event pipeline achter de signalen
-- Privacy & consent expliciet maken in de UI
-- ElevenLabs: voice briefing voor de adviseur
-- Aikido AI Code Audit draaien en findings fixen
-- Demo-script (<3 min) opnemen
+Vite · React · TypeScript · CSS (geen backend; fictieve data)
