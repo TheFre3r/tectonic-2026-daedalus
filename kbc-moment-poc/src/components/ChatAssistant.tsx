@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { askMia, isMiaLivePreferred, type MiaReply } from '../lib/gemini'
-import { sanitizeText } from '../lib/security'
+import { isPlausibleBePhone, sanitizeText } from '../lib/security'
 import { reasonLabel, type ChatContext } from '../hooks/useSnelhulp'
 
 type Props = {
@@ -63,6 +63,8 @@ export default function ChatAssistant({ context, onMessage, onSolved }: Props) {
   ])
   const [momentHint, setMomentHint] = useState<MiaReply['momentHint']>(null)
   const [callback, setCallback] = useState<'closed' | 'form' | 'sent'>('closed')
+  const [phone, setPhone] = useState('')
+  const [phoneError, setPhoneError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const listRef = useRef<HTMLOListElement>(null)
   const botTurns = messages.filter((m) => m.from === 'bot').length
@@ -118,6 +120,11 @@ export default function ChatAssistant({ context, onMessage, onSolved }: Props) {
 
   function requestCallback(e: FormEvent) {
     e.preventDefault()
+    if (!isPlausibleBePhone(phone)) {
+      setPhoneError('Gebruik een Belgisch nummer (bv. 04xx xx xx xx)')
+      return
+    }
+    setPhoneError(null)
     setCallback('sent')
   }
 
@@ -252,8 +259,18 @@ export default function ChatAssistant({ context, onMessage, onSolved }: Props) {
           <p className="sh-step-title">Laatste stap: een medewerker belt je terug</p>
           <label>
             Telefoonnummer
-            <input type="tel" required placeholder="04xx xx xx xx" maxLength={20} />
+            <input
+              type="tel"
+              required
+              placeholder="04xx xx xx xx"
+              maxLength={20}
+              autoComplete="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              inputMode="tel"
+            />
           </label>
+          {phoneError && <p className="sh-note" role="alert">{phoneError}</p>}
           <label>
             Moment
             <select defaultValue="vandaag">

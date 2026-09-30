@@ -1,8 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_GEMINI_API_KEY?: string
-  readonly VITE_GEMINI_MODEL?: string
+  // No VITE_ secrets — Gemini key lives only as server GEMINI_API_KEY
 }
 
 interface ImportMeta {

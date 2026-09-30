@@ -7,8 +7,18 @@ import {
   type CustomerAction,
 } from '../data/customerActions'
 import { buildInference } from '../engine/momentEngine'
+import { sanitizeText } from '../lib/security'
 
 export type AppTab = 'home' | 'betalen' | 'zoeken' | 'hulp' | 'berichten' | 'ik'
+
+const ALLOWED_TABS = new Set<AppTab>([
+  'home',
+  'betalen',
+  'zoeken',
+  'hulp',
+  'berichten',
+  'ik',
+])
 
 type Persisted = {
   scenarioId: string
@@ -19,25 +29,53 @@ type Persisted = {
   advisorRead: boolean
 }
 
+function allowedSignalIds(scenarioId: string): Set<string> {
+  const s = getScenario(scenarioId)
+  return new Set(s.signals.map((x) => x.id))
+}
+
+function allowedChecklist(scenarioId: string): Set<string> {
+  const s = getScenario(scenarioId)
+  return new Set(s.appAfter.checklist.map((c) => c.label))
+}
+
+function sanitizePersisted(parsed: unknown): Persisted | null {
+  if (!parsed || typeof parsed !== 'object') return null
+  const p = parsed as Record<string, unknown>
+  if (typeof p.scenarioId !== 'string') return null
+  if (!scenarios.some((s) => s.id === p.scenarioId)) return null
+
+  const signalAllow = allowedSignalIds(p.scenarioId)
+  const checkAllow = allowedChecklist(p.scenarioId)
+
+  const unlockedSignalIds = Array.isArray(p.unlockedSignalIds)
+    ? p.unlockedSignalIds
+        .filter((id): id is string => typeof id === 'string' && signalAllow.has(id))
+        .slice(0, signalAllow.size)
+    : []
+
+  const checkedItems = Array.isArray(p.checkedItems)
+    ? p.checkedItems
+        .filter((id): id is string => typeof id === 'string' && checkAllow.has(id))
+        .map((id) => sanitizeText(id, 120))
+        .slice(0, checkAllow.size)
+    : []
+
+  return {
+    scenarioId: p.scenarioId,
+    consent: Boolean(p.consent),
+    unlockedSignalIds,
+    checkedItems,
+    onboarded: Boolean(p.onboarded),
+    advisorRead: Boolean(p.advisorRead),
+  }
+}
+
 function load(): Persisted | null {
   try {
     const raw = sessionStorage.getItem(SESSION_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw) as Persisted
-    if (!parsed || typeof parsed !== 'object') return null
-    if (!scenarios.some((s) => s.id === parsed.scenarioId)) return null
-    return {
-      scenarioId: parsed.scenarioId,
-      consent: Boolean(parsed.consent),
-      unlockedSignalIds: Array.isArray(parsed.unlockedSignalIds)
-        ? parsed.unlockedSignalIds.filter((id) => typeof id === 'string')
-        : [],
-      checkedItems: Array.isArray(parsed.checkedItems)
-        ? parsed.checkedItems.filter((id) => typeof id === 'string')
-        : [],
-      onboarded: Boolean(parsed.onboarded),
-      advisorRead: Boolean(parsed.advisorRead),
-    }
+    if (!raw || raw.length > 8_000) return null
+    return sanitizePersisted(JSON.parse(raw))
   } catch {
     return null
   }
@@ -45,9 +83,11 @@ function load(): Persisted | null {
 
 function save(state: Persisted) {
   try {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(state))
+    const clean = sanitizePersisted(state)
+    if (!clean) return
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(clean))
   } catch {
-    // Prototype: ignore quota / private mode failures.
+    // ignore quota / private mode
   }
 }
 
@@ -62,12 +102,18 @@ const defaultState = (): Persisted => ({
 
 export function useCustomerSession() {
   const [state, setState] = useState<Persisted>(() => load() ?? defaultState())
-  const [tab, setTab] = useState<AppTab>('home')
+  const [tab, setTabState] = useState<AppTab>('home')
   const [toast, setToast] = useState<string | null>(null)
 
   const persist = useCallback((next: Persisted) => {
-    setState(next)
-    save(next)
+    const clean = sanitizePersisted(next) ?? defaultState()
+    setState(clean)
+    save(clean)
+  }, [])
+
+  const setTab = useCallback((next: AppTab) => {
+    if (!ALLOWED_TABS.has(next)) return
+    setTabState(next)
   }, [])
 
   const scenario = useMemo(() => getScenario(state.scenarioId), [state.scenarioId])
@@ -93,14 +139,16 @@ export function useCustomerSession() {
   const momentActive = inference.ready && state.consent
 
   function showToast(message: string) {
-    setToast(message)
+    setToast(sanitizeText(message, 160))
     window.setTimeout(() => setToast(null), 2200)
   }
 
   function startSession(scenarioId: string, consent: boolean) {
+    // Authorization: only known personas
+    if (!scenarios.some((s) => s.id === scenarioId)) return
     const next: Persisted = {
       scenarioId,
-      consent,
+      consent: Boolean(consent),
       unlockedSignalIds: [],
       checkedItems: [],
       onboarded: true,
@@ -128,6 +176,19 @@ export function useCustomerSession() {
   }
 
   function runAction(action: CustomerAction) {
+    // Prevent unlocking arbitrary signal IDs (IDOR-style tampering).
+    const allowed = actions.some(
+      (a) =>
+        a.id === action.id && a.unlocksSignalId === action.unlocksSignalId,
+    )
+    if (!allowed) {
+      showToast('Actie niet toegestaan')
+      return
+    }
+    if (!allowedSignalIds(state.scenarioId).has(action.unlocksSignalId)) {
+      showToast('Actie niet toegestaan')
+      return
+    }
     if (state.unlockedSignalIds.includes(action.unlocksSignalId)) {
       showToast('Dit heb je al gedaan')
       return
@@ -147,6 +208,7 @@ export function useCustomerSession() {
   }
 
   function toggleCheck(label: string) {
+    if (!allowedChecklist(state.scenarioId).has(label)) return
     const exists = state.checkedItems.includes(label)
     persist({
       ...state,
@@ -157,6 +219,8 @@ export function useCustomerSession() {
   }
 
   function markAdvisorRead() {
+    // Only meaningful when moment is active (authz on feature)
+    if (!momentActive) return
     persist({ ...state, advisorRead: true })
   }
 

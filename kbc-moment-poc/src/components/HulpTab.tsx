@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { searchTrees } from '../data/trees'
 import { askMia, isMiaLivePreferred } from '../lib/gemini'
-import { sanitizeText } from '../lib/security'
+import { isPlausibleBePhone, sanitizeText } from '../lib/security'
 import { reasonLabel, useSnelhulp, type ChatContext } from '../hooks/useSnelhulp'
 
 type Bubble = {
@@ -42,6 +42,8 @@ export function HulpTab() {
   const [botTurns, setBotTurns] = useState(0)
   const [busy, setBusy] = useState(false)
   const [callback, setCallback] = useState<'closed' | 'form' | 'sent'>('closed')
+  const [phone, setPhone] = useState('')
+  const [phoneError, setPhoneError] = useState<string | null>(null)
   const logRef = useRef<HTMLDivElement>(null)
   const escalatedKey = s.escalation
     ? `${s.escalation.reason}:${s.escalation.question ?? s.escalation.searchQuery}`
@@ -244,6 +246,11 @@ export function HulpTab() {
 
   function requestCallback(e: FormEvent) {
     e.preventDefault()
+    if (!isPlausibleBePhone(phone)) {
+      setPhoneError('Gebruik een Belgisch nummer (bv. 04xx xx xx xx)')
+      return
+    }
+    setPhoneError(null)
     setCallback('sent')
     setExtra((m) => [
       ...m,
@@ -319,8 +326,18 @@ export function HulpTab() {
             <p>Laatste stap: een medewerker belt je terug</p>
             <label>
               Telefoonnummer
-              <input type="tel" required placeholder="04xx xx xx xx" />
+              <input
+                type="tel"
+                required
+                placeholder="04xx xx xx xx"
+                maxLength={20}
+                autoComplete="tel"
+                inputMode="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
             </label>
+            {phoneError && <p role="alert">{phoneError}</p>}
             <button type="submit" className="btn btn-primary">
               Bel mij terug
             </button>
@@ -332,7 +349,8 @@ export function HulpTab() {
         <form className="cust-hulp-compose" onSubmit={send}>
           <input
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={(e) => setDraft(e.target.value.slice(0, 500))}
+            maxLength={500}
             placeholder={
               s.escalation
                 ? 'Typ je bericht…'
@@ -351,7 +369,7 @@ export function HulpTab() {
 
       <p className="cust-hulp-note">
         Prototype. Eerst vaste stappen; daarna Mia
-        {live ? ' via Gemini' : ' (lokale modus — zet VITE_GEMINI_API_KEY)'}.
+        {live ? ' via beveiligde Gemini-proxy' : ' (lokale modus — zet GEMINI_API_KEY in .env)'}.
         {!s.escalation && s.tree ? ` · Terug ${s.backs}/3` : null}
       </p>
     </div>

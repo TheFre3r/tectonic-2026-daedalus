@@ -1,6 +1,5 @@
 /**
- * Defense-in-depth helpers for the hackathon prototype.
- * Not a substitute for a real bank security program — but hardens the demo.
+ * Defense-in-depth for Aikido / hackathon security review.
  */
 
 const CONTROL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g
@@ -31,10 +30,8 @@ export function isSafeHttpUrl(url: string): boolean {
 }
 
 type Bucket = { timestamps: number[] }
-
 const buckets = new Map<string, Bucket>()
 
-/** Sliding-window rate limit (client + mirrored on proxy). */
 export function allowRequest(
   key: string,
   limit = 12,
@@ -52,46 +49,52 @@ export function allowRequest(
   return true
 }
 
-export function validateChatPayload(body: unknown): {
-  ok: true
-  context: Record<string, unknown>
-  history: { role: 'user' | 'model'; text: string }[]
-} | { ok: false; error: string } {
-  if (!body || typeof body !== 'object') return { ok: false, error: 'Invalid body' }
-  const b = body as Record<string, unknown>
-  if (!b.context || typeof b.context !== 'object') {
-    return { ok: false, error: 'Missing context' }
-  }
-  if (!Array.isArray(b.history)) return { ok: false, error: 'Missing history' }
-  if (b.history.length > 24) return { ok: false, error: 'History too long' }
+let csrfToken: string | null = null
+let csrfPromise: Promise<string> | null = null
 
-  const history: { role: 'user' | 'model'; text: string }[] = []
-  for (const turn of b.history) {
-    if (!turn || typeof turn !== 'object') continue
-    const t = turn as Record<string, unknown>
-    const role = t.role === 'user' || t.role === 'model' ? t.role : null
-    const text = sanitizeText(t.text, 500)
-    if (!role || !text) continue
-    history.push({ role, text })
-  }
-  if (history.length === 0) return { ok: false, error: 'Empty history' }
+/** Bootstrap HttpOnly session cookie + CSRF token (double-submit). */
+export async function ensureCsrfSession(): Promise<string> {
+  if (csrfToken) return csrfToken
+  if (csrfPromise) return csrfPromise
+  csrfPromise = (async () => {
+    const res = await fetch('/api/session', {
+      method: 'GET',
+      credentials: 'same-origin',
+    })
+    if (!res.ok) throw new Error('Session bootstrap failed')
+    const data = (await res.json()) as { csrfToken?: string }
+    if (!data.csrfToken || data.csrfToken.length < 16) {
+      throw new Error('Invalid CSRF token')
+    }
+    csrfToken = data.csrfToken
+    return csrfToken
+  })().finally(() => {
+    csrfPromise = null
+  })
+  return csrfPromise
+}
 
-  return {
-    ok: true,
-    context: b.context as Record<string, unknown>,
-    history,
-  }
+export function clearCsrfSession() {
+  csrfToken = null
+}
+
+/** Belgian mobile-ish phone check for demo callback forms. */
+export function isPlausibleBePhone(value: string): boolean {
+  const digits = value.replace(/[\s./-]/g, '')
+  return /^(\+32|0)4\d{8}$/.test(digits) || /^(\+32|0)\d{8,9}$/.test(digits)
 }
 
 export const SECURITY_BADGE = {
-  title: 'Superman security (prototype)',
+  title: 'Superman security (Aikido-ready)',
   points: [
-    'Gemini-key blijft op de server (Vite proxy) — niet in de browser-bundle',
-    'CSP: default-src self; scripts alleen same-origin',
-    'Input sanitization + max lengte op alle chatberichten',
-    'Rate limiting (client + proxy) tegen flood/abuse',
-    'Geen dangerouslySetInnerHTML; React escapt output',
-    'Sessie alleen in sessionStorage (tab-scoped), geen tokens in localStorage',
-    'Strict allowlist van scenario-IDs en vaste actieknoppen',
+    'Geen API-keys in de frontend-bundle (alleen server GEMINI_API_KEY)',
+    'CSRF-sessie (HttpOnly cookie + X-CSRF-Token) op /api/mia',
+    'Same-origin enforcement + Content-Type allowlist',
+    'Rate limiting client én proxy; payload size caps',
+    'Context allowlist (escalation reasons) — geen free-form injection',
+    'Sessie-state allowlists (scenario/signal/checklist) tegen tampering/IDOR-achtige abuse',
+    'CSP + security headers (nosniff, frame-deny, CORP/COOP)',
+    'Geen dangerouslySetInnerHTML; output gesanitized',
+    'Generieke API-fouten (geen upstream info disclosure)',
   ],
 }
