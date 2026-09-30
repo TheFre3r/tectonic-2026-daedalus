@@ -15,17 +15,17 @@
 
 @media (prefers-color-scheme: dark) {
   .snelhulp {
-    --sh-surface: #13241b;
-    --sh-surface-2: #0e1c15;
+    --sh-surface: #123040;
+    --sh-surface-2: #0d2430;
     --sh-ink: #e6f2eb;
     --sh-muted: #9bb5a7;
-    --sh-line: rgba(143, 214, 173, 0.18);
-    --sh-accent: #3fbf7a;
-    --sh-accent-ink: #06170e;
+    --sh-line: rgba(143, 212, 239, 0.18);
+    --sh-accent: #00a3d9;
+    --sh-accent-ink: #061820;
     --sh-warn-bg: #3a2610;
     --sh-warn: #f3b46b;
 
-    background: #0a1611;
+    background: #0a1620;
     border-radius: var(--radius);
     padding: 1.5rem 1.25rem 2.5rem;
     margin: 0 -0.25rem 2rem;
@@ -43,17 +43,17 @@
 }
 
 [data-theme='dark'] .snelhulp {
-  --sh-surface: #13241b;
-  --sh-surface-2: #0e1c15;
+  --sh-surface: #123040;
+  --sh-surface-2: #0d2430;
   --sh-ink: #e6f2eb;
   --sh-muted: #9bb5a7;
-  --sh-line: rgba(143, 214, 173, 0.18);
-  --sh-accent: #3fbf7a;
-  --sh-accent-ink: #06170e;
+  --sh-line: rgba(143, 212, 239, 0.18);
+  --sh-accent: #00a3d9;
+  --sh-accent-ink: #061820;
   --sh-warn-bg: #3a2610;
   --sh-warn: #f3b46b;
 
-  background: #0a1611;
+  background: #0a1620;
   border-radius: var(--radius);
   padding: 1.5rem 1.25rem 2.5rem;
   margin: 0 -0.25rem 2rem;
@@ -475,8 +475,8 @@
 }
 
 .sh-mia-banner.live {
-  background: rgba(63, 191, 122, 0.16);
-  border: 1px solid rgba(63, 191, 122, 0.35);
+  background: rgba(0, 163, 217, 0.16);
+  border: 1px solid rgba(0, 163, 217, 0.35);
 }
 
 .sh-mia-banner.local {
@@ -558,8 +558,8 @@
   margin: 0.5rem 0 0.85rem;
   padding: 0.9rem 1rem;
   border-radius: 14px;
-  background: linear-gradient(145deg, rgba(63, 191, 122, 0.18), rgba(0, 61, 36, 0.08));
-  border: 1px solid rgba(63, 191, 122, 0.35);
+  background: linear-gradient(145deg, rgba(0, 163, 217, 0.18), rgba(0, 61, 84, 0.08));
+  border: 1px solid rgba(0, 163, 217, 0.35);
 }
 
 .sh-moment-card p {
