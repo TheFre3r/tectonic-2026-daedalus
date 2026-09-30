@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { PrototypeDemo } from '../components/PrototypeDemo'
+import { Snelhulp } from '../components/Snelhulp'
 import { ThemeToggle } from '../components/ThemeToggle'
 import { useMomentDemo } from '../hooks/useMomentDemo'
 
@@ -15,6 +16,8 @@ export function ExplainPage() {
         </div>
         <div className="nav-links">
           <span className="nav-meta">Uitleg · Team Daedalus</span>
+          <a href="#snelhulp">Snelhulp</a>
+          <a href="#moment">KBC Moment</a>
           <ThemeToggle />
           <Link className="btn btn-primary nav-cta" to="/app">
             Open klant-prototype
@@ -22,8 +25,10 @@ export function ExplainPage() {
         </div>
       </header>
 
-      <section className="hero">
-        <p className="hero-kicker">Wat is dit?</p>
+      <Snelhulp />
+
+      <section className="hero" id="moment">
+        <p className="hero-kicker">Volgende fase · personalisatie met consent</p>
         <p className="hero-brand">KBC Moment</p>
         <h1 className="hero-title">
           Een demo van hoe een bank
