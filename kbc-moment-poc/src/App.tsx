@@ -12,30 +12,140 @@ export default function App() {
           <span className="brand-mark" aria-hidden />
           <span className="brand-name">KBC Moment</span>
         </div>
-        <span className="nav-meta">Tectonic · Team Daedalus · Prototype</span>
+        <span className="nav-meta">Klikbaar prototype · Team Daedalus</span>
       </header>
 
       <section className="hero">
+        <p className="hero-kicker">Wat is dit?</p>
         <p className="hero-brand">KBC Moment</p>
         <h1 className="hero-title">
-          Begrijp het moment.
+          Een demo van hoe een bank
           <br />
-          Niet alleen het product.
+          je leven kan begrijpen — zonder te gokken.
         </h1>
         <p className="hero-lead">
-          Werkend prototype: signalen binnenhalen, intent herkennen,
-          klant-app aanpassen, adviseur briefen, kanalen orkestreren — privacy-first
-          en schaalbaar naar miljoenen klanten.
+          Dit is <strong>geen echte bank-app</strong> om te betalen of in te
+          loggen. Het is een <strong>klikbaar prototype</strong>: je speelt na
+          hoe KBC zou merken dat er iets speelt (verhuizen, eerste job, zorg)
+          en dan de app + adviseur daarop aanpast.
         </p>
         <div className="hero-cta">
-          <a className="btn btn-primary" href="#demo">
-            Start prototype-demo
+          <a className="btn btn-primary" href="#hoe-werkt-het">
+            Hoe werkt het?
           </a>
-          <a className="btn btn-ghost" href="#visie">
-            Visie
+          <a className="btn btn-ghost" href="#demo">
+            Direct de demo
           </a>
         </div>
         <div className="hero-atmosphere" aria-hidden />
+      </section>
+
+      <section className="explain" id="hoe-werkt-het">
+        <div className="section-head">
+          <h2>Hoe werkt het? (simpel)</h2>
+          <p>
+            Denk niet aan “een nieuwe knop”. Denk aan een slimme laag achter de
+            bank die 4 stappen doet.
+          </p>
+        </div>
+
+        <ol className="flow-steps">
+          <li>
+            <strong>1. Er gebeurt iets in je leven</strong>
+            <span>
+              Je betaalt een notaris, krijgt je eerste loon, of zoekt “uitstel
+              afbetaling” in de app.
+            </span>
+          </li>
+          <li>
+            <strong>2. Dat wordt een signaal</strong>
+            <span>
+              De bank ziet geen bordje “IK VERHUIS”. Wel betalingen, app-gedrag
+              en productstatus die ze al (met toestemming) mag zien.
+            </span>
+          </li>
+          <li>
+            <strong>3. Signalen samen = een “moment”</strong>
+            <span>
+              Eén signaal is zwak. Meerdere samen maken een inschatting: “dit
+              lijkt op eerste woning” — met een % zekerheid, geen absolute
+              waarheid.
+            </span>
+          </li>
+          <li>
+            <strong>4. Alles past zich aan</strong>
+            <span>
+              De app toont een checklist i.p.v. reclame. De adviseur krijgt een
+              korte briefing. Verzekering helpt. Beleggen wordt soms juist
+              gedempt.
+            </span>
+          </li>
+        </ol>
+      </section>
+
+      <section className="explain know" id="hoe-weet-kbc">
+        <div className="section-head">
+          <h2>Hoe zou KBC weten of je verhuist of een eerste job start?</h2>
+          <p>
+            Kort antwoord: ze “weten” het niet zeker. Ze <em>schatten</em> het
+            in uit patronen — zoals hieronder.
+          </p>
+        </div>
+
+        <div className="know-grid">
+          <article className="panel">
+            <p className="eyebrow">Voorbeeld · Verhuizen</p>
+            <h3>Signalen die samen “eerste woning” suggereren</h3>
+            <ul className="plain-list">
+              <li>Betaling aan notaris of makelaar</li>
+              <li>Zoeken op “woonlening” in de app</li>
+              <li>Groot bedrag van spaargeld weg (voorschot)</li>
+              <li>Adreswijziging aangevraagd</li>
+              <li>Nog geen brandverzekering</li>
+            </ul>
+            <p className="callout">
+              Eén daarvan = misschien. Vijf samen = waarschijnlijk. Daarom zie
+              je later een <strong>confidence %</strong>.
+            </p>
+          </article>
+
+          <article className="panel">
+            <p className="eyebrow">Voorbeeld · Eerste job</p>
+            <h3>Signalen die samen “starter” suggereren</h3>
+            <ul className="plain-list">
+              <li>Eerste terugkerende loonstorting</li>
+              <li>Vaak het budget-scherm openen</li>
+              <li>Studentenkrediet dat bijna afloopt</li>
+              <li>Nog geen spaardoel</li>
+              <li>Jong starter-profiel</li>
+            </ul>
+            <p className="callout">
+              Bij twijfel: zachte hulp (“Wil je een checklist?”), geen harde
+              aanname. Een adviseur kan het altijd corrigeren.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section className="explain what-not">
+        <div className="what-not-box">
+          <div>
+            <h3>Dit is wél</h3>
+            <ul className="plain-list">
+              <li>Een klikbaar prototype / demo</li>
+              <li>Uitleg van het concept met echte interactie</li>
+              <li>Fictieve personages (Lien, Amir, Sofie)</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Dit is níet</h3>
+            <ul className="plain-list">
+              <li>Een echte KBC-login of betaal-app</li>
+              <li>Echte klantdata</li>
+              <li>Een af product klaar voor productie</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <PrototypeDemo
@@ -57,40 +167,42 @@ export default function App() {
 
       <section className="vision" id="visie">
         <div className="section-head">
-          <h2>Wat dit prototype bewijst</h2>
+          <h2>Waarom dit telt</h2>
           <p>
-            Geen losse feature — een herbruikbare manier om klanten te begrijpen
-            en te begeleiden op schaal.
+            Banken pushen vaak producten. Mensen leven in momenten. Dit
+            prototype toont hoe je van “campagne” naar “begrijpen & begeleiden”
+            gaat — voor miljoenen klanten, mét privacy.
           </p>
         </div>
         <ol className="pillars">
           <li>
             <strong>Signalen</strong>
-            <span>Event pipeline met gewichten die confidence opbouwen.</span>
+            <span>Dingen die de bank al mag zien, gebundeld tot een verhaal.</span>
           </li>
           <li>
-            <strong>Herkenning</strong>
-            <span>Situatie, gedrag en intent verschijnen progressief.</span>
+            <strong>Inschatting</strong>
+            <span>Situatie + gedrag + intent, met een % zekerheid.</span>
           </li>
           <li>
-            <strong>Adaptatie</strong>
-            <span>Voor/na klant-app: zelfde persoon, andere ervaring.</span>
+            <strong>Andere app-ervaring</strong>
+            <span>Zelfde persoon: eerst reclame, daarna checklist op maat.</span>
           </li>
           <li>
-            <strong>Kanalen</strong>
-            <span>App, adviseur, verzekering en beleggen delen één moment.</span>
+            <strong>Ook de adviseur</strong>
+            <span>Korte briefing: wat wél en wat níet zeggen vandaag.</span>
           </li>
           <li>
-            <strong>Schaal + privacy</strong>
-            <span>Consent, retentie, override en dagmetrics voor 2,3M klanten.</span>
+            <strong>Soms minder pushen</strong>
+            <span>Personaliseren = soms beleggingsreclame dempen.</span>
           </li>
         </ol>
       </section>
 
       <footer className="footer">
-        <p>KBC Moment prototype · Tectonic Hackathon · Team Daedalus</p>
+        <p>KBC Moment · klikbaar prototype · Tectonic Hackathon · Team Daedalus</p>
         <p className="muted">
-          Fictieve scenario’s. Geen echte klantdata. Voice via browser Speech API.
+          Geen echte klantdata. Spraakbriefing via je browser. Scroll omhoog naar
+          “Hoe werkt het?” als je de uitleg opnieuw wilt.
         </p>
       </footer>
     </div>
