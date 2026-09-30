@@ -1,0 +1,10 @@
+{
+  "name": "tectonic-2026-daedalus",
+  "private": true,
+  "scripts": {
+    "predev": "npm --prefix kbc-moment-poc install --no-audit --no-fund",
+    "dev": "npm --prefix kbc-moment-poc run dev",
+    "build": "npm --prefix kbc-moment-poc run build",
+    "preview": "npm --prefix kbc-moment-poc run preview"
+  }
+}
