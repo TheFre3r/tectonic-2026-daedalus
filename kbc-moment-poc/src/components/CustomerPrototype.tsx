@@ -5,6 +5,7 @@ import type { CustomerAction } from '../data/customerActions'
 import type { AppTab } from '../hooks/useCustomerSession'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { SpeakButton } from './SpeakButton'
+import { ThemeToggle } from './ThemeToggle'
 
 type Session = ReturnType<typeof useCustomerSession>
 
@@ -313,9 +314,12 @@ function Onboarding({ session }: { session: Session }) {
       >
         Open mijn KBC-app
       </button>
-      <Link className="text-link" to="/">
-        ← Terug naar de uitleg
-      </Link>
+      <div className="cust-onboard-footer">
+        <ThemeToggle />
+        <Link className="text-link" to="/">
+          ← Terug naar de uitleg
+        </Link>
+      </div>
       <p className="security-note">
         Prototype-veiligheid (basis): geen echte wachtwoorden of klantdata,
         sessie alleen in deze browsertab (sessionStorage), alleen vaste knoppen
@@ -351,9 +355,12 @@ export function CustomerPrototype() {
           <strong>KBC Moment</strong>
           <span>Klant-prototype</span>
         </div>
-        <Link to="/" className="text-link">
-          Uitleg
-        </Link>
+        <div className="cust-top-actions">
+          <ThemeToggle />
+          <Link to="/" className="text-link">
+            Uitleg
+          </Link>
+        </div>
       </header>
 
       <div className="cust-phone-frame">

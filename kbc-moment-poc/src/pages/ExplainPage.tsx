@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { PrototypeDemo } from '../components/PrototypeDemo'
+import { ThemeToggle } from '../components/ThemeToggle'
 import { useMomentDemo } from '../hooks/useMomentDemo'
 
 export function ExplainPage() {
@@ -14,6 +15,7 @@ export function ExplainPage() {
         </div>
         <div className="nav-links">
           <span className="nav-meta">Uitleg · Team Daedalus</span>
+          <ThemeToggle />
           <Link className="btn btn-primary nav-cta" to="/app">
             Open klant-prototype
           </Link>
