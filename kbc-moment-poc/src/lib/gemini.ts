@@ -13,10 +13,11 @@ export type ChatTurn = { role: 'user' | 'model'; text: string }
 
 const MODEL_CANDIDATES = [
   import.meta.env.VITE_GEMINI_MODEL,
+  'gemini-flash-latest',
+  'gemini-3.8-flash',
+  'gemini-3-flash',
   'gemini-2.5-flash',
   'gemini-2.0-flash',
-  'gemini-flash-latest',
-  'gemini-1.5-flash',
 ].filter(Boolean) as string[]
 
 export function getGeminiApiKey(): string | null {
